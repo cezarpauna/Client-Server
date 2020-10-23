@@ -1,0 +1,48 @@
+Pauna Cezar
+324CB
+
+In primul rand, am folosit laboratorul de multiplexare ca model de cod,
+deci unele bucati sunt de acolo si practic toata ideea. Diferenta fata de laborator
+este ca aici avem si un clinet UDP conectat
+NU am implementat si functionalitate SF.
+am 3 structuri: una pentru un packet udp care vine de la clientul UDP
+		aceasta structura contine topicul, tipul si payload-ul
+		una pentru un packet tcp in care transform ce am primit
+		de la clientul UDP si trimit la subscriberii acelui topic
+		una pentru subscriberi ca sa trimita subscriberii la server
+		la ce se aboneaza/dezaboneaza cu aceasta structura
+		doar anunt serverul unde sa aboneze acest subscriber,
+		deci nu are nevoie decat de topic tip si sf
+Din punct de vedere al stocarii datelor despre utilizatori si topice, am ales
+unordered_map pentru eficienta de accesare.
+Am 2 unordered_map:
+	-> topics face legatura dintre numele topicului si un vector de perechi
+	   acel vector de perechi reprezinta utilizatorii TCP care s-au abonat
+	   la acest topic (pair pentur a retine socket-ul si ID-ul)
+	-> subs retine toti utilizatorii (socket-ul si ID-ul)
+
+Atunci cand primesc ceva pe server exita 4 optiuni:
+-> stdin, comanda exit care inchide tot
+-> cerere de la un client TCP, atunci cand primesc accept conexiunea adaug la
+   file descriptori socket-ul, actualizez maximul, dezactivez Neagle si
+   primesc ID-ul pentru a pune in map-ul de subscriberi(mai bine zis clienti TCP)
+   si afisez noua conexiune
+-> mesaj de la un client UDP, aici construiesc un packet TCP pentru al trimite
+   subscriberilor la acest topic, in functie de type actionez ca in cerinta
+   (INT, SHORT_REAL, FLOATE, STRING) pt a crea mesajul
+-> comanda de la client TCP, aici poate fi doar subscribe unsubscribe sau exit
+   se trateaza fiecare, daca e exit il sterg din file descriptori si din map-ul
+   meu de subscriberi, daca e subscribe am grija ca map-ul cu topice sa nu fie
+   gol si adaug subscriberul la acel topic, daca nu exista topicul il adaug
+   la unsubscribe sterg din topicul respectiv subscriberul
+
+La subscriber este destul de clar, atunci cand primesc o comanda de la stdin
+vad ce este subscribe/unsubscribe/exit si trimit la server in consecinta
+daca nu e de la stdin si e de la server, atunci e mesaj de la un topic
+la care este abonat subscriberul si se afiseaza datele necesare
+
+Am incercat sa tratez cat de multe erori am putut, dar fara o cerinta riguroasa
+in acest sens, probabil am omis cateva.
+
+PS: Dificultatea temei as zice ca a fost mai mica decat la prima tema, dar
+m-a incurcat destul de rau lipsa unui checker
